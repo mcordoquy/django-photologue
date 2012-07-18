@@ -560,15 +560,21 @@ class Photo(Sortable, ImageModel):
         """Return the public galleries to which this photo belongs."""
         return self.galleries.filter(is_public=True)
 
-    def get_previous_in_gallery(self, gallery):
+    def get_previous_in_gallery(self, gallery, user):
+        photos = gallery.photos
+        if not user.is_authenticated():
+            photos = photos.filter(is_public=True)
         try:
-             return gallery.photos.exclude(order__gte=self.order).order_by('-order')[0]
+            return photos.exclude(order__gte=self.order).order_by('-order')[0]
         except:
             return None
 
-    def get_next_in_gallery(self, gallery):
+    def get_next_in_gallery(self, gallery, user):
+        photos = gallery.photos
+        if not user.is_authenticated():
+            photos = photos.filter(is_public=True)
         try:
-            return gallery.photos.exclude(order__lte=self.order)[0]
+            return photos.exclude(order__lte=self.order)[0]
         except:
             return None
 
