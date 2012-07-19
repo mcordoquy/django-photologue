@@ -138,6 +138,7 @@ class Gallery(models.Model):
                                     null=True, blank=True)
     tags = TagField(help_text=tagfield_help_text, verbose_name=_('tags'))
 
+    owner = models.ForeignKey('auth.User', blank=True, null=True)
     viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
 
     class Meta:
@@ -181,7 +182,7 @@ class Gallery(models.Model):
 
     def public(self):
         return self.photos.filter(is_public=True)
-
+    
 
 class GalleryUpload(models.Model):
     zip_file = models.FileField(_('images file (.zip)'), upload_to=PHOTOLOGUE_DIR+"/temp",
@@ -569,11 +570,13 @@ class Photo(Sortable, ImageModel):
                 bView = True
         else:
             for album in self.galleries.all():
+                if user == album.owner:
+                    bView = True
+                    break
                 if user in album.viewers.all():
                     bView = True
                     break
         return bView
-
 
     def get_previous_in_gallery(self, gallery, user):
         photos = gallery.photos

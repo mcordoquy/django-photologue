@@ -6,13 +6,21 @@ from adminsortable.admin import SortableAdmin
 from django import forms
 from models import *
 
+forms.ModelMultipleChoiceField
 
 class GalleryAdmin(ModelAdmin):
     list_display = ('title', 'date_added', 'photo_count', 'is_public')
     list_filter = ['date_added', 'is_public']
+    exclude = ['owner',]
+
     date_hierarchy = 'date_added'
     prepopulated_fields = {'title_slug': ('title',)}
     filter_horizontal = ('photos',)
+
+    def save_model(self, request, obj, form, change):
+        obj.owner = request.user
+        obj.save()
+
 
 def crop_from_top(modeladmin, request, queryset):
     queryset.update(crop_from='top')
@@ -34,6 +42,7 @@ class PhotoAdmin(SortableAdmin):
         if db_field.name == 'caption':
             formfield.widget = forms.Textarea(attrs={'cols': 60, 'rows': 2})
         return formfield
+
 
 class PhotoEffectAdmin(ModelAdmin):
     list_display = ('name', 'description', 'color', 'brightness', 'contrast', 'sharpness', 'filters', 'admin_sample')
