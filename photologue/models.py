@@ -138,6 +138,8 @@ class Gallery(models.Model):
                                     null=True, blank=True)
     tags = TagField(help_text=tagfield_help_text, verbose_name=_('tags'))
 
+    viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
+
     class Meta:
         ordering = ['-date_added']
         get_latest_by = 'date_added'
@@ -559,6 +561,19 @@ class Photo(Sortable, ImageModel):
     def public_galleries(self):
         """Return the public galleries to which this photo belongs."""
         return self.galleries.filter(is_public=True)
+
+    def can_view(self, user):
+        bView = False
+        if (not user.is_authenticated()):
+            if self.is_public == True :
+                bView = True
+        else:
+            for album in self.galleries.all():
+                if user in album.viewers.all():
+                    bView = True
+                    break
+        return bView
+
 
     def get_previous_in_gallery(self, gallery, user):
         photos = gallery.photos
