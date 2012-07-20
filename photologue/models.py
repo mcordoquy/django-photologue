@@ -570,6 +570,9 @@ class Photo(Sortable, ImageModel):
                 bView = True
         else:
             for album in self.galleries.all():
+                if album.is_public == True :
+                    bView = True
+                    break
                 if user == album.owner:
                     bView = True
                     break
