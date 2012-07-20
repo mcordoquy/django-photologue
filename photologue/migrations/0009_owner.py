@@ -10,7 +10,7 @@ class Migration(DataMigration):
         "Write your forwards methods here."
         for album in orm.Gallery.objects.all():
              if not album.owner:
-                album.owner = orm.User.objects.all()[0]
+                album.owner = orm['auth.User'].objects.all()[0]
                 album.save()
 
     def backwards(self, orm):
