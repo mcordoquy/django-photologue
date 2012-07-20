@@ -126,11 +126,10 @@ for n in dir(ImageFilter):
 IMAGE_FILTERS_HELP_TEXT = _('Chain multiple filters using the following pattern "FILTER_ONE->FILTER_TWO->FILTER_THREE". Image filters will be applied in order. The following filters are available: %s.' % (', '.join(filter_names)))
 
 
-class Gallery(models.Model):
+class Gallery(Sortable, models.Model):
     date_added = models.DateTimeField(_('date published'), default=datetime.now)
-    title = models.CharField(_('title'), max_length=100, unique=True)
-    title_slug = models.SlugField(_('title slug'), unique=True,
-                                  help_text=_('A "slug" is a unique URL-friendly title for an object.'))
+    title = models.CharField(_('title'), max_length=100)
+    title_slug = models.SlugField(_('title slug'))
     description = models.TextField(_('description'), blank=True)
     is_public = models.BooleanField(_('is public'), default=True,
                                     help_text=_('Public galleries will be displayed in the default views.'))
@@ -141,9 +140,7 @@ class Gallery(models.Model):
     owner = models.ForeignKey('auth.User', blank=True, null=True)
     viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
 
-    class Meta:
-        ordering = ['-date_added']
-        get_latest_by = 'date_added'
+    class Meta(Sortable.Meta):
         verbose_name = _('gallery')
         verbose_name_plural = _('galleries')
 
@@ -154,7 +151,7 @@ class Gallery(models.Model):
         return self.__unicode__()
 
     def get_absolute_url(self):
-        return reverse('pl-gallery', args=[self.title_slug])
+        return reverse('pl-gallery', args=[self.owner, self.title_slug])
 
     def latest(self, limit=LATEST_LIMIT, public=True):
         if not limit:
@@ -534,7 +531,7 @@ from pprint import pprint
 class Photo(Sortable, ImageModel):
     title = models.CharField(_('title'), max_length=100, unique=True)
     title_slug = models.SlugField(_('slug'), unique=True,
-                                  help_text=('A "slug" is a unique URL-friendly title for an object.'))
+                                  help_text=_('A "slug" is a unique URL-friendly title for an object.'))
     caption = models.TextField(_('caption'), blank=True)
     date_added = models.DateTimeField(_('date added'), default=datetime.now, editable=False)
     is_public = models.BooleanField(_('is public'), default=True, help_text=_('Public photographs will be displayed in the default views.'))
