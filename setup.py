@@ -12,11 +12,7 @@ if len(version_tuple) == 3:
 else:
     version = "%d.%d" % version_tuple[:2]
 
-install_requires = [
-    'Django>=1.4',
-    'PIL',
-    'django-taggit',
-]
+
 
 setup(
     name = "django-photologue",
@@ -39,6 +35,11 @@ setup(
     tests_require=[
         'django-setuptest>=0.0.6',
     ],
+    install_requires = [
+        'Django>=1.4',
+        'PIL',
+        'django-taggit',
+    ]
     classifiers = ['Development Status :: 5 - Production/Stable',
                    'Environment :: Web Environment',
                    'Framework :: Django',
