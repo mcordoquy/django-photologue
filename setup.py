@@ -12,6 +12,12 @@ if len(version_tuple) == 3:
 else:
     version = "%d.%d" % version_tuple[:2]
 
+install_requires = [
+    'Django>=1.4',
+    'PIL',
+    'django-taggit',
+]
+
 setup(
     name = "django-photologue",
     version = version,

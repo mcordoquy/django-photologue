@@ -35,20 +35,9 @@ except ImportError:
     except ImportError:
         raise ImportError('Photologue was unable to import the Python Imaging Library. Please confirm it`s installed and available on your current Python path.')
 
-# attempt to load the django-tagging TagField from default location,
-# otherwise we substitude a dummy TagField.
-try:
-    from tagging.fields import TagField
-    tagfield_help_text = _('Separate tags with spaces, put quotes around multiple-word tags.')
-except ImportError:
-    class TagField(models.CharField):
-        def __init__(self, **kwargs):
-            default_kwargs = {'max_length': 255, 'blank': True}
-            default_kwargs.update(kwargs)
-            super(TagField, self).__init__(**default_kwargs)
-        def get_internal_type(self):
-            return 'CharField'
-    tagfield_help_text = _('Django-tagging was not found, tags will be treated as plain text.')
+
+from taggit.managers import TaggableManager
+
 
 from utils import EXIF
 from utils.reflection import add_reflection
@@ -135,8 +124,7 @@ class Gallery(Sortable, models.Model):
                                     help_text=_('Public galleries will be displayed in the default views.'))
     photos = models.ManyToManyField('Photo', related_name='galleries', verbose_name=_('photos'),
                                     null=True, blank=True)
-    tags = TagField(help_text=tagfield_help_text, verbose_name=_('tags'))
-
+    tags = TaggableManager()
     owner = models.ForeignKey('auth.User', blank=True, null=True)
     viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
 
@@ -535,7 +523,7 @@ class Photo(Sortable, ImageModel):
     caption = models.TextField(_('caption'), blank=True)
     date_added = models.DateTimeField(_('date added'), default=datetime.now, editable=False)
     is_public = models.BooleanField(_('is public'), default=True, help_text=_('Public photographs will be displayed in the default views.'))
-    tags = TagField(help_text=tagfield_help_text, verbose_name=_('tags'))
+    tags = TaggableManager()
 
     class Meta(Sortable.Meta):
         verbose_name = _("photo")
