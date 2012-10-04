@@ -123,7 +123,7 @@ class Gallery(Sortable, models.Model):
                                     help_text=_('Public galleries will be displayed in the default views.'))
     photos = models.ManyToManyField('Photo', related_name='galleries', verbose_name=_('photos'),
                                     null=True, blank=True)
-    tags = TaggableManager()
+    tags = TaggableManager(blank=True)
     owner = models.ForeignKey('auth.User', blank=True, null=True)
     viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
 
@@ -176,7 +176,7 @@ class GalleryUpload(models.Model):
     caption = models.TextField(_('caption'), blank=True, help_text=_('Caption will be added to all photos.'))
     description = models.TextField(_('description'), blank=True, help_text=_('A description of this Gallery.'))
     is_public = models.BooleanField(_('is public'), default=True, help_text=_('Uncheck this to make the uploaded gallery and included photographs private.'))
-    tags = models.CharField(max_length=255, blank=True, verbose_name=_('tags'))
+    tags = models.CharField(max_length=255, blank=True, null=True, verbose_name=_('tags'))
 
     class Meta:
         verbose_name = _('gallery upload')
@@ -522,7 +522,7 @@ class Photo(Sortable, ImageModel):
     caption = models.TextField(_('caption'), blank=True)
     date_added = models.DateTimeField(_('date added'), default=datetime.now, editable=False)
     is_public = models.BooleanField(_('is public'), default=True, help_text=_('Public photographs will be displayed in the default views.'))
-    tags = TaggableManager()
+    tags = TaggableManager(blank=True)
 
     class Meta(Sortable.Meta):
         verbose_name = _("photo")

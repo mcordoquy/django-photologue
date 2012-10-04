@@ -32,8 +32,8 @@ def crop_from_bottom(modeladmin, request, queryset):
 crop_from_bottom.short_description = "Crop photos from bottom"
 
 class PhotoAdmin(SortableAdmin):
-    list_display = ('id', 'title', 'caption', 'tags', 'date_taken', 'date_added', 'is_public', 'view_count', 'admin_thumbnail')
-    list_editable = ('title', 'caption', 'tags', 'is_public')
+    list_display = ('id', 'title', 'caption', 'date_taken', 'date_added', 'is_public', 'view_count', 'admin_thumbnail')
+    list_editable = ('title', 'caption', 'is_public')
     list_filter = ['date_added', 'is_public', 'tags', 'galleries']
     search_fields = ['title', 'title_slug', 'caption', 'tags']
     prepopulated_fields = {'title_slug': ('title',)}
