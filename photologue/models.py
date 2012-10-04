@@ -177,7 +177,7 @@ class GalleryUpload(models.Model):
     caption = models.TextField(_('caption'), blank=True, help_text=_('Caption will be added to all photos.'))
     description = models.TextField(_('description'), blank=True, help_text=_('A description of this Gallery.'))
     is_public = models.BooleanField(_('is public'), default=True, help_text=_('Uncheck this to make the uploaded gallery and included photographs private.'))
-    tags = models.CharField(max_length=255, blank=True, help_text=tagfield_help_text, verbose_name=_('tags'))
+    tags = models.CharField(max_length=255, blank=True, verbose_name=_('tags'))
 
     class Meta:
         verbose_name = _('gallery upload')
