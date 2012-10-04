@@ -39,7 +39,7 @@ setup(
         'Django>=1.4',
         'PIL',
         'django-taggit',
-    ]
+    ],
     classifiers = ['Development Status :: 5 - Production/Stable',
                    'Environment :: Web Environment',
                    'Framework :: Django',
