@@ -35,7 +35,6 @@ except ImportError:
     except ImportError:
         raise ImportError('Photologue was unable to import the Python Imaging Library. Please confirm it`s installed and available on your current Python path.')
 
-
 from taggit.managers import TaggableManager
 
 

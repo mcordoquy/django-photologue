@@ -16,7 +16,7 @@ class Migration(SchemaMigration):
             ('title_slug', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=50)),
             ('description', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('is_public', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('tags', self.gf('tagging.fields.TagField')()),
+            ('tags', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True, default='')),
         ))
         db.send_create_signal('photologue', ['Gallery'])
 
@@ -68,7 +68,7 @@ class Migration(SchemaMigration):
             ('caption', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('date_added', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
             ('is_public', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('tags', self.gf('tagging.fields.TagField')()),
+            ('tags', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True, default='')),
         ))
         db.send_create_signal('photologue', ['Photo'])
 
@@ -156,7 +156,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'photos': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'galleries'", 'null': 'True', 'symmetrical': 'False', 'to': "orm['photologue.Photo']"}),
-            'tags': ('tagging.fields.TagField', [], {}),
+            'tags': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'title_slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'})
         },
@@ -193,7 +193,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'blank': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'tags': ('tagging.fields.TagField', [], {}),
+            'tags': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'title_slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'}),
             'view_count': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'})
