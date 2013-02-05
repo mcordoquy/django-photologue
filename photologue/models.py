@@ -203,7 +203,8 @@ class GalleryUpload(models.Model):
                                                  title_slug=slugify(self.title),
                                                  description=self.description,
                                                  is_public=self.is_public,
-                                                 tags=self.tags)
+                #                                 tags=self.tags
+                )
             from cStringIO import StringIO
             for filename in sorted(zip.namelist()):
                 if filename.startswith('__'): # do not process meta files
@@ -233,7 +234,8 @@ class GalleryUpload(models.Model):
                                           title_slug=slug,
                                           caption=self.caption,
                                           is_public=self.is_public,
-                                          tags=self.tags)
+                            #              tags=self.tags
+                            )
                             photo.image.save(filename, ContentFile(data))
                             gallery.photos.add(photo)
                             count = count + 1
