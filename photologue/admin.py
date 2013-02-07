@@ -2,6 +2,7 @@
 
 """
 from django.contrib.admin import ModelAdmin, site
+from hvad.admin import TranslatableAdmin
 from adminsortable.admin import SortableAdmin
 from django import forms
 from models import *
@@ -9,19 +10,22 @@ from django.db.models import get_model
 from uuslug import uuslug
 
 
-class GalleryAdmin(SortableAdmin):
-    list_display = ('title', 'owner', 'date_added', 'photo_count', 'is_public')
+class GalleryAdmin(TranslatableAdmin, SortableAdmin):
+    list_display = ('get_title', 'owner', 'date_added', 'photo_count', 'is_public')
     list_filter = ['date_added', 'is_public']
-    exclude = ['title_slug']
-
     date_hierarchy = 'date_added'
     filter_horizontal = ('photos',)
 
+    def __init__(self, *args, **kwargs):
+        super(GalleryAdmin, self).__init__(*args, **kwargs)
+        self.prepopulated_fields = {'title_slug': ('title',)}
+
     def save_model(self, request, obj, form, change):
         obj.owner = request.user
-        if not obj.title_slug:
+        if not obj.get_title_slug:
             obj.title_slug = uuslug(obj.title, instance=obj, slug_field='title_slug', filter_dict={'owner': request.user,})
         obj.save()
+        
 
 def crop_from_top(modeladmin, request, queryset):
     queryset.update(crop_from='top')
@@ -31,18 +35,24 @@ def crop_from_bottom(modeladmin, request, queryset):
     queryset.update(crop_from='bottom')
 crop_from_bottom.short_description = "Crop photos from bottom"
 
-class PhotoAdmin(SortableAdmin):
-    list_display = ('id', 'title', 'caption', 'date_taken', 'date_added', 'is_public', 'view_count', 'admin_thumbnail')
-    list_editable = ('title', 'caption', 'is_public')
+
+class PhotoAdmin(TranslatableAdmin, SortableAdmin):
+    list_display = ('id', 'get_title', 'get_caption', 'date_taken', 'date_added', 'is_public', 'view_count', 'admin_thumbnail')
+    list_editable = ('is_public',)
     list_filter = ['date_added', 'is_public', 'galleries']
-    search_fields = ['title', 'title_slug', 'caption', 'tags']
-    prepopulated_fields = {'title_slug': ('title',)}
+#    search_fields = ['title', 'title_slug', 'caption', 'tags']
     actions = [crop_from_top, crop_from_bottom]
+
+    def __init__(self, *args, **kwargs):
+        super(PhotoAdmin, self).__init__(*args, **kwargs)
+        self.prepopulated_fields = {'title_slug': ('title',)}
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super(PhotoAdmin, self).formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name == 'caption':
+        if db_field.name == 'get_caption':
             formfield.widget = forms.Textarea(attrs={'cols': 60, 'rows': 2})
         return formfield
+
 
 class PhotoEffectAdmin(ModelAdmin):
     list_display = ('name', 'description', 'color', 'brightness', 'contrast', 'sharpness', 'filters', 'admin_sample')
@@ -84,6 +94,7 @@ class WatermarkAdmin(ModelAdmin):
 
 
 class GalleryUploadAdmin(ModelAdmin):
+
     def has_change_permission(self, request, obj=None):
         return False # To remove the 'Save and continue editing' button
 

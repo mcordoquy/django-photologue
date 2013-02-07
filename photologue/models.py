@@ -15,9 +15,11 @@ from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
 from django.utils.encoding import smart_str, force_unicode, filepath_to_uri
 from django.utils.functional import curry
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, get_language
 
 from adminsortable.models import Sortable
+from hvad.models import TranslatableModel, TranslatedFields
+
 
 # Required PIL classes may or may not be available from the root namespace
 # depending on the installation method used.
@@ -114,16 +116,12 @@ for n in dir(ImageFilter):
 IMAGE_FILTERS_HELP_TEXT = _('Chain multiple filters using the following pattern "FILTER_ONE->FILTER_TWO->FILTER_THREE". Image filters will be applied in order. The following filters are available: %s.' % (', '.join(filter_names)))
 
 
-class Gallery(Sortable, models.Model):
+class Gallery(TranslatableModel, Sortable):
     date_added = models.DateTimeField(_('date published'), default=datetime.now)
-    title = models.CharField(_('title'), max_length=100)
-    title_slug = models.SlugField(_('title slug'))
-    description = models.TextField(_('description'), blank=True)
     is_public = models.BooleanField(_('is public'), default=True,
                                     help_text=_('Public galleries will be displayed in the default views.'))
     photos = models.ManyToManyField('Photo', related_name='galleries', verbose_name=_('photos'),
                                     null=True, blank=True)
-    tags = TaggableManager(blank=True)
     owner = models.ForeignKey('auth.User', blank=True, null=True)
     viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
 
@@ -131,14 +129,35 @@ class Gallery(Sortable, models.Model):
         verbose_name = _('gallery')
         verbose_name_plural = _('galleries')
 
+    translations = TranslatedFields(
+        title = models.CharField(_('title'), max_length=100),
+        title_slug = models.SlugField(_('title slug')),
+        description = models.TextField(_('description'), blank=True),
+        tags = TaggableManager(blank=True),
+    )
+
+
     def __unicode__(self):
-        return self.title
+        return u'Album %i' % self.id
 
     def __str__(self):
         return self.__unicode__()
 
+    def get_title(self):
+        return self.lazy_translation_getter('title')
+    get_title.short_description = _('Title')
+
+    def get_title_slug(self):
+        return self.lazy_translation_getter('title_slug')
+    get_title_slug.short_description = _('Title slug')
+
+    def get_description(self):
+        return self.lazy_translation_getter('description')
+    get_description.short_description = _('description')
+
     def get_absolute_url(self):
-        return reverse('pl-gallery', args=[self.owner, self.title_slug])
+        slug = self.get_title_slug()
+        return reverse('pl-gallery', args=[self.owner.id, self.id, slug])
 
     def latest(self, limit=LATEST_LIMIT, public=True):
         if not limit:
@@ -172,10 +191,10 @@ class GalleryUpload(models.Model):
     zip_file = models.FileField(_('images file (.zip)'), upload_to=PHOTOLOGUE_DIR+"/temp",
                                 help_text=_('Select a .zip file of images to upload into a new Gallery.'))
     gallery = models.ForeignKey(Gallery, null=True, blank=True, help_text=_('Select a gallery to add these images to. leave this empty to create a new gallery from the supplied title.'))
+    is_public = models.BooleanField(_('is public'), default=True, help_text=_('Uncheck this to make the uploaded gallery and included photographs private.'))
     title = models.CharField(_('title'), max_length=75, help_text=_('All photos in the gallery will be given a title made up of the gallery title + a sequential number.'))
     caption = models.TextField(_('caption'), blank=True, help_text=_('Caption will be added to all photos.'))
     description = models.TextField(_('description'), blank=True, help_text=_('A description of this Gallery.'))
-    is_public = models.BooleanField(_('is public'), default=True, help_text=_('Uncheck this to make the uploaded gallery and included photographs private.'))
     tags = models.CharField(max_length=255, blank=True, null=True, verbose_name=_('tags'))
 
     class Meta:
@@ -199,12 +218,15 @@ class GalleryUpload(models.Model):
             if self.gallery:
                 gallery = self.gallery
             else:
-                gallery = Gallery.objects.create(title=self.title,
-                                                 title_slug=slugify(self.title),
-                                                 description=self.description,
-                                                 is_public=self.is_public,
-                #                                 tags=self.tags
-                )
+                lang = get_language()
+                gallery = Gallery( is_public=self.is_public )
+                lang_gallery = gallery.translate(lang)
+                lang_gallery.title = self.title
+                lang_gallery.title_slug = slugify(self.title)
+                lang_gallery.description = self.description
+                gallery.save()
+                #TODO : tags
+ 
             from cStringIO import StringIO
             for filename in sorted(zip.namelist()):
                 if filename.startswith('__'): # do not process meta files
@@ -228,26 +250,28 @@ class GalleryUpload(models.Model):
                         title = ' '.join([self.title, str(count)])
                         slug = slugify(title)
                         try:
-                            p = Photo.objects.get(title_slug=slug)
+                            p = Photo.objects.get(translations__title_slug=slug)
                         except Photo.DoesNotExist:
-                            photo = Photo(title=title,
-                                          title_slug=slug,
-                                          caption=self.caption,
-                                          is_public=self.is_public,
-                            #              tags=self.tags
-                            )
+                            photo = Photo(is_public=self.is_public)
+                            lang = get_language()
+                            lang_photo = photo.translate(lang)
+                            lang_photo.title = title
+                            lang_photo.title_slug = slug
+                            lang_photo.caption = self.caption
+                            #TODO : tags
                             photo.image.save(filename, ContentFile(data))
                             gallery.photos.add(photo)
                             count = count + 1
                             break
                         count = count + 1
             zip.close()
+            print gallery
             return gallery
 
 
 class ImageModel(models.Model):
     image = models.ImageField(_('image'), max_length=IMAGE_FIELD_MAX_LENGTH, 
-                              upload_to=get_storage_path, blank=True)
+                              upload_to=get_storage_path, blank=True, null=True)
     date_taken = models.DateTimeField(_('date taken'), null=True, blank=True, editable=False)
     view_count = models.PositiveIntegerField(default=0, editable=False)
     crop_from = models.CharField(_('crop from'), blank=True, max_length=10, default='center', choices=CROP_ANCHOR_CHOICES)
@@ -517,25 +541,44 @@ class ImageOverride(ImageModel):
 
 from pprint import pprint
 
-class Photo(Sortable, ImageModel):
-    title = models.CharField(_('title'), max_length=100, unique=True)
-    title_slug = models.SlugField(_('slug'), unique=True,
-                                  help_text=_('A "slug" is a unique URL-friendly title for an object.'))
-    caption = models.TextField(_('caption'), blank=True)
+class Photo(TranslatableModel, Sortable, ImageModel):
     date_added = models.DateTimeField(_('date added'), default=datetime.now, editable=False)
     is_public = models.BooleanField(_('is public'), default=True, help_text=_('Public photographs will be displayed in the default views.'))
-    tags = TaggableManager(blank=True)
 
     class Meta(Sortable.Meta):
         verbose_name = _("photo")
         verbose_name_plural = _("photos")
 
+    translations = TranslatedFields(
+        title = models.CharField(_('title'), max_length=100, unique=True),
+        title_slug = models.SlugField(_('slug'), help_text=_('URL-friendly title for an object.')),
+        caption = models.TextField(_('caption'), blank=True),
+        tags = TaggableManager(blank=True),
+    )
 
     def __unicode__(self):
-        return self.title
+        return u'Photo %i' % self.id
 
     def __str__(self):
         return self.__unicode__()
+
+    def get_title(self):
+        return self.lazy_translation_getter('title')
+    get_title.short_description = _('Title')
+
+    def get_title_slug(self):
+        return self.lazy_translation_getter('title_slug')
+    get_title_slug.short_description = _('Title slug')
+
+    def get_caption(self):
+        return self.lazy_translation_getter('caption')
+    get_caption.short_description = _('caption')
+
+    def get_tags(self):
+        tags = self.lazy_translation_getter('tags')
+        return tags
+    get_tags.short_description = _('tags')
+
 
     def save(self, *args, **kwargs):
         if self.title_slug is None:
@@ -543,7 +586,8 @@ class Photo(Sortable, ImageModel):
         super(Photo, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('pl-photo', args=[self.title_slug])
+        slug = self.get_title_slug()
+        return reverse('pl-photo', args=[self.id, slug])
 
     def public_galleries(self):
         """Return the public galleries to which this photo belongs."""
