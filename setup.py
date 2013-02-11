@@ -11,7 +11,7 @@ if len(version_tuple) == 3:
     version = "%d.%d.%s" % version_tuple
 else:
     version = "%d.%d" % version_tuple[:2]
-
+version = version + '-dev'
 
 
 setup(
