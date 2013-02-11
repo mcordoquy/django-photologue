@@ -122,7 +122,7 @@ class Gallery(TranslatableModel, Sortable):
                                     help_text=_('Public galleries will be displayed in the default views.'))
     photos = models.ManyToManyField('Photo', related_name='galleries', verbose_name=_('photos'),
                                     null=True, blank=True)
-    owner = models.ForeignKey('auth.User', blank=True, null=True)
+    owner = models.ForeignKey('auth.User', default=settings.DEFAULT_USER_ID)
     viewers = models.ManyToManyField('auth.User', related_name='view_albums', blank=True, null=True)
 
     class Meta(Sortable.Meta):
