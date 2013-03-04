@@ -19,7 +19,7 @@ from django.utils.translation import ugettext_lazy as _, get_language
 
 from adminsortable.models import Sortable
 from hvad.models import TranslatableModel, TranslatedFields
-
+from hvad.utils import get_translation
 
 # Required PIL classes may or may not be available from the root namespace
 # depending on the installation method used.
@@ -550,7 +550,7 @@ class Photo(TranslatableModel, Sortable, ImageModel):
         verbose_name_plural = _("photos")
 
     translations = TranslatedFields(
-        title = models.CharField(_('title'), max_length=100, unique=True),
+        title = models.CharField(_('title'), max_length=100),
         title_slug = models.SlugField(_('slug'), help_text=_('URL-friendly title for an object.')),
         caption = models.TextField(_('caption'), blank=True),
         tags = TaggableManager(blank=True),
@@ -578,12 +578,6 @@ class Photo(TranslatableModel, Sortable, ImageModel):
         tags = self.lazy_translation_getter('tags')
         return tags
     get_tags.short_description = _('tags')
-
-
-    def save(self, *args, **kwargs):
-        if self.title_slug is None:
-            self.title_slug = slugify(self.title)
-        super(Photo, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
         slug = self.get_title_slug()
