@@ -37,7 +37,7 @@ setup(
     ],
     install_requires = [
         'Django>=1.4',
-        'PIL',
+        'Pillow',
         'django-taggit',
     ],
     classifiers = ['Development Status :: 5 - Production/Stable',
